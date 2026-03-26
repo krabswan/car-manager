@@ -93,13 +93,17 @@ tr:hover td{background:#f9fafb}
 .fu-status.需再跟进{background:#ede9fe;color:#7c3aed;}
 
 @media(max-width:768px){.form-row{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.today-grid{grid-template-columns:repeat(2,1fr)}}
-.dm{background:#1a1a2e;color:#e0e0e0}.dm .panel,.dm .stat-card,.dm .table-container{background:#16213e}</style>
+.dm{background:#1a1a2e;color:#e0e0e0}.dm .panel,.dm .stat-card,.dm .table-container{background:#16213e}
+.renewal-hint{background:#fef3c7;border-left:4px solid #f59e0b;padding:10px 15px;border-radius:0 8px 8px 0;margin-bottom:12px}
+.renewal-hint.urgent{background:#fee2e2;border-left-color:#ef4444}
+.renewal-hint.info{background:#dbeafe;border-left-color:#1a56db}
+</style>
 </head>
 <body>
 <div id="loginOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a56db 0%,#0d47a1 100%);z-index:9999;display:flex;justify-content:center;align-items:center;">
 <div style="background:white;padding:40px;border-radius:15px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);width:90%;max-width:400px;">
 <h2 style="color:#1a56db;margin-bottom:10px;">🦀 蟹老板车管家</h2>
-<p style="color:#666;margin-bottom:30px;">V3.1 增强版</p>
+<p style="color:#666;margin-bottom:30px;">V2.1 增强版</p>
 <input type="password" id="loginPassword" placeholder="请输入密码" style="width:100%;padding:15px;border:2px solid #e5e7eb;border-radius:8px;font-size:16px;margin-bottom:20px;box-sizing:border-box;">
 <button onclick="checkPassword()" style="width:100%;padding:15px;background:#1a56db;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-weight:bold;">进入系统</button>
 <p id="loginError" style="color:#ef4444;margin-top:15px;display:none;">密码错误！</p>
@@ -107,7 +111,7 @@ tr:hover td{background:#f9fafb}
 </div>
 
 <div class="header">
-<h1>🦀 蟹老板车管家 <span class="cloud-badge">☁️ 云端版</span><span class="version-badge">V2.0</span></h1>
+<h1>🦀 蟹老板车管家 <span class="cloud-badge">☁️ 云端版</span><span class="version-badge">V2.1</span></h1>
 </div>
 
 <!-- 总体统计卡片 -->
@@ -183,7 +187,11 @@ tr:hover td{background:#f9fafb}
 <div class="form-group"><label>联系电话</label><input type="tel" id="customerPhone"></div>
 </div>
 <div class="form-row">
-<div class="form-group"><label>车牌号 *</label><input type="text" id="plate" placeholder="必填"></div>
+<div class="form-group"><label>车牌号 *</label><input type="text" id="plate" placeholder="必填" oninput="checkPlateHint(this.value)"></div>
+<div id="plateHint" style="display:none;background:#fef3c7;border-left:4px solid #f59e0b;padding:10px 15px;border-radius:0 8px 8px 0;margin-bottom:12px;font-size:13px">
+<b>📋 历史记录</b>
+<div id="plateHintContent"></div>
+</div>
 <div class="form-group"><label>车架号</label><input type="text" id="vin"></div>
 </div>
 <div class="form-row">
@@ -1189,6 +1197,46 @@ function impDat(f){
   };
   r.readAsArrayBuffer(f);document.getElementById('impBtn').value='';
 }
+
+// Check plate for renewal hint
+function checkPlateHint(plate) {
+    if (!plate || plate.length < 3) {
+        document.getElementById('plateHint').style.display = 'none';
+        return;
+    }
+    plate = plate.toUpperCase();
+    var matches = records.filter(function(r) {
+        return r.plate && r.plate.toUpperCase().indexOf(plate) > -1;
+    });
+    var hint = document.getElementById('plateHint');
+    var content = document.getElementById('plateHintContent');
+    if (matches.length > 0) {
+        var html = '';
+        matches.forEach(function(r) {
+            var expiry = r.biz_start_date || r.force_start_date || '未知';
+            var daysLeft = '';
+            if (r.biz_start_date) {
+                var start = new Date(r.biz_start_date);
+                var end = new Date(start);
+                end.setFullYear(end.getFullYear() + 1);
+                var now = new Date();
+                var diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+                if (diff > 0) daysLeft = ' (还有' + diff + '天到期)';
+                else if (diff > -30) daysLeft = ' (已过期' + Math.abs(diff) + '天)';
+                else daysLeft = ' (已过期' + Math.abs(diff) + '天)';
+            }
+            html += '<div style="margin-top:8px;padding:8px;background:rgba(255,255,255,0.7);border-radius:6px;">';
+            html += '<b>' + r.plate + '</b> - ' + r.customer_name + '<br>';
+            html += '总保费: <b>¥' + (r.total_premium || 0).toLocaleString() + '</b>';
+            html += ' | 签单: ' + (r.sign_date || '未知') + '<br>';
+            html += '保险到期: ' + expiry + daysLeft;
+            if (r.remark) html += '<br>备注: ' + r.remark;
+            html += '</div>';
+        });
+        content.innerHTML = '<div style="color:#92400e">发现 ' + matches.length + ' 条历史记录：</div>' + html;
+        hint.style.display = 'block';
+    } else {
+        hint.style.display = 'none';
+    }
+}
 </script>
-</body>
-</html>
