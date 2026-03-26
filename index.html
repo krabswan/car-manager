@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蟹老板车管家管理系统 V2.0</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'微软雅黑',Arial,sans-serif;background:#f5f7fa;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a56db 0%,#0d47a1 100%);color:white;padding:20px;text-align:center}
+.header h1{font-size:24px;margin-bottom:5px}
+.cloud-badge{display:inline-block;background:#10b981;padding:3px 10px;border-radius:20px;font-size:11px}.version-badge{display:inline-block;background:#f59e0b;padding:3px 10px;border-radius:20px;font-size:11px;margin-left:10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;padding:15px}
+.stat-card{background:white;border-radius:10px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.stat-card h3{font-size:12px;color:#666;margin-bottom:5px}
+.stat-card .value{font-size:28px;font-weight:bold;color:#1a56db}
+.stat-card.orange .value{color:#f59e0b}
+.stat-card.green .value{color:#10b981}
+.stat-card.red .value{color:#ef4444}
+/* 今日业绩卡片 */
+.today-panel{margin:0 15px 15px;background:linear-gradient(135deg,#1a56db 0%,#0d47a1 100%);border-radius:12px;padding:18px;color:white;box-shadow:0 4px 15px rgba(26,86,219,0.3)}
+.today-panel .today-title{font-size:13px;opacity:0.85;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.today-panel .today-date{font-size:12px;opacity:0.7}
+.today-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.today-item{text-align:center}
+.today-item .t-label{font-size:11px;opacity:0.75;margin-bottom:4px}
+.today-item .t-value{font-size:20px;font-weight:bold}
+.today-item .t-value.highlight{color:#fbbf24}
+.today-list{margin-top:12px;border-top:1px solid rgba(255,255,255,0.2);padding-top:10px}
+.today-list-item{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.1)}
+.today-list-item:last-child{border-bottom:none}
+.tabs{display:flex;background:white;border-bottom:2px solid #e5e7eb}
+.tab{padding:12px 20px;cursor:pointer;border-bottom:3px solid transparent;font-size:13px;color:#666}
+.tab.active{border-color:#1a56db;color:#1a56db;font-weight:bold}
+.content{padding:15px}
+.panel{display:none}
+.panel.active{display:block}
+.btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:bold}
+.btn-primary{background:#1a56db;color:white}
+.btn-success{background:#10b981;color:white}
+.btn-secondary{background:#6b7280;color:white}
+.btn-danger{background:#ef4444;color:white}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:12px;color:#666;margin-bottom:4px}
+.form-group input,.form-group select{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.table-container{background:white;border-radius:10px;overflow:auto;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:15px}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th,td{padding:12px 8px;text-align:left;font-size:13px}
+th{background:#f9fafb;font-weight:600;color:#374151;border-bottom:2px solid #e5e7eb}
+tr:hover td{background:#f9fafb}
+.search-bar{display:flex;gap:10px;margin-bottom:15px}
+.search-bar input{flex:1;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center}
+.modal.active{display:flex}
+.modal-content{background:white;border-radius:15px;width:95%;max-width:650px;max-height:90vh;overflow-y:auto}
+.modal-header{padding:15px 20px;background:#1a56db;color:white;display:flex;justify-content:space-between}
+.modal-close{background:none;border:none;color:white;font-size:24px;cursor:pointer}
+.modal-body{padding:20px}
+.modal-footer{padding:15px 20px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;gap:10px}
+.btn-sm{padding:5px 10px;font-size:12px}
+.loading{text-align:center;padding:50px;color:#666}
+.toast{position:fixed;bottom:20px;right:20px;background:#10b981;color:white;padding:15px 25px;border-radius:8px;z-index:2000}
+.toast.error{background:#ef4444}
+.toast.warning{background:#f59e0b}
+.pagination{display:flex;justify-content:center;gap:10px;padding:15px;background:white;border-radius:10px;margin-top:10px}
+.file-input{display:none}
+
+
+
+.filter-tag{display:inline-block;background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:12px;font-size:12px;margin:2px;}
+.trend-bar{display:inline-block;background:#1a56db;border-radius:3px 3px 0 0;min-width:20px;transition:height 0.3s;}
+
+.renewal-item{background:white;border-left:4px solid #1a56db;border-radius:0 8px 8px 0;padding:12px 15px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.renewal-item.urgent{border-left-color:#ef4444;background:#fff5f5;}
+.renewal-item.warning{border-left-color:#f59e0b;background:#fffbeb;}
+.renewal-item.normal{border-left-color:#10b981;background:#f0fdf4;}
+.renewal-item.expired{border-left-color:#6b7280;background:#f9fafb;}
+.renewal-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:bold;margin-left:6px;}
+.renewal-badge.urgent{background:#fee2e2;color:#dc2626;}
+.renewal-badge.warning{background:#fef3c7;color:#d97706;}
+.renewal-badge.normal{background:#d1fae5;color:#059669;}
+.renewal-badge.expired{background:#f3f4f6;color:#6b7280;}
+
+.fu-item{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:8px;}
+.fu-item:hover{border-color:#1a56db;}
+.fu-status{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:bold;}
+.fu-status.待联系{background:#fef3c7;color:#d97706;}
+.fu-status.已联系{background:#d1fae5;color:#059669;}
+.fu-status.意向客户{background:#fee2e2;color:#dc2626;}
+.fu-status.已成交{background:#dbeafe;color:#1d4ed8;}
+.fu-status.暂不续保{background:#f3f4f6;color:#6b7280;}
+.fu-status.需再跟进{background:#ede9fe;color:#7c3aed;}
+
+@media(max-width:768px){.form-row{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.today-grid{grid-template-columns:repeat(2,1fr)}}
+.dm{background:#1a1a2e;color:#e0e0e0}.dm .panel,.dm .stat-card,.dm .table-container{background:#16213e}</style>
+</head>
+<body>
+<div id="loginOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a56db 0%,#0d47a1 100%);z-index:9999;display:flex;justify-content:center;align-items:center;">
+<div style="background:white;padding:40px;border-radius:15px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);width:90%;max-width:400px;">
+<h2 style="color:#1a56db;margin-bottom:10px;">🦀 蟹老板车管家</h2>
+<p style="color:#666;margin-bottom:30px;">V3.1 增强版</p>
+<input type="password" id="loginPassword" placeholder="请输入密码" style="width:100%;padding:15px;border:2px solid #e5e7eb;border-radius:8px;font-size:16px;margin-bottom:20px;box-sizing:border-box;">
+<button onclick="checkPassword()" style="width:100%;padding:15px;background:#1a56db;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-weight:bold;">进入系统</button>
+<p id="loginError" style="color:#ef4444;margin-top:15px;display:none;">密码错误！</p>
+</div>
+</div>
+
+<div class="header">
+<h1>🦀 蟹老板车管家 <span class="cloud-badge">☁️ 云端版</span><span class="version-badge">V2.0</span></h1>
+</div>
+
+<!-- 总体统计卡片 -->
+<div class="stats">
+<div class="stat-card"><h3>客户总数</h3><div class="value" id="statTotal">0</div></div>
+<div class="stat-card orange"><h3>总保费</h3><div class="value" id="statPremium">¥0</div></div>
+<div class="stat-card green"><h3>总净收益</h3><div class="value" id="statProfit">¥0</div></div>
+</div>
+
+<!-- 今日业绩卡片 -->
+<div class="today-panel">
+  <div class="today-title">
+    <span>📊 今日业绩战报</span>
+    <span class="today-date" id="todayDate"></span>
+  </div>
+  <div class="today-grid">
+    <div class="today-item">
+      <div class="t-label">签单数</div>
+      <div class="t-value highlight" id="todayCount">0</div>
+    </div>
+    <div class="today-item">
+      <div class="t-label">总保费</div>
+      <div class="t-value" id="todayPremium">¥0</div>
+    </div>
+    <div class="today-item">
+      <div class="t-label">总佣金</div>
+      <div class="t-value" id="todayCommission">¥0</div>
+    </div>
+    <div class="today-item">
+      <div class="t-label">净收益</div>
+      <div class="t-value highlight" id="todayProfit">¥0</div>
+    </div>
+  </div>
+  <div class="today-list" id="todayList"></div>
+</div>
+
+<div class="tabs">
+<div class="tab active" onclick="switchTab('list')">📋 客户列表</div>
+<div class="tab" onclick="switchTab('add')">➕ 新增记录</div>
+<div class="tab" onclick="switchTab('stats')">📊 数据统计</div>
+<div class="tab" onclick="switchTab('import')">📥 导入</div>
+<div class="tab" onclick="switchTab('export')">📤 导出</div>
+<div class="tab" onclick="switchTab('renewal')">🔔 续保提醒</div>
+<div class="tab" onclick="switchTab('followup')">📝 跟进记录</div>
+</div>
+
+<div class="content">
+<div class="panel active" id="listPanel">
+<div class="search-bar" style="flex-wrap:wrap;gap:8px;">
+<input type="text" id="searchInput" placeholder="🔍 搜索客户/车牌/电话..." onkeyup="if(event.key==='Enter')searchRecords()" style="min-width:150px;">
+<select id="filterSalesman" onchange="searchRecords()" style="padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+  <option value="">全部业务员</option>
+</select>
+<select id="filterCompany" onchange="searchRecords()" style="padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+  <option value="">全部公司</option>
+</select>
+<button class="btn btn-primary" onclick="searchRecords()">搜索</button><button class="btn btn-secondary" onclick="findDup()">查重</button>
+<button class="btn btn-secondary" onclick="resetFilter()">重置</button>
+</div>
+<div class="loading" id="loadingState">加载中...</div>
+<div class="table-container">
+<table id="dataTable" style="display:none;">
+<thead><tr><th>ID</th><th>客户姓名</th><th>电话</th><th>车牌</th><th>使用性质</th><th>公司</th><th>签单日期</th><th>总保费</th><th>佣金</th><th>代理费</th><th>业务员</th><th>操作</th></tr></thead>
+<tbody id="recordsTable"></tbody>
+</table>
+</div>
+<div class="pagination" id="pagination"></div>
+</div>
+
+<div class="panel" id="addPanel">
+<div class="form-row">
+<div class="form-group"><label>客户姓名 *</label><input type="text" id="customerName" placeholder="必填"></div>
+<div class="form-group"><label>联系电话</label><input type="tel" id="customerPhone"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>车牌号 *</label><input type="text" id="plate" placeholder="必填"></div>
+<div class="form-group"><label>车架号</label><input type="text" id="vin"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>使用性质</label><input type="text" id="brand" placeholder="家庭/营运/出租"></div>
+<div class="form-group"><label>初登日期</label><input type="date" id="firstRegDate"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>保险公司</label><input type="text" id="company"></div>
+<div class="form-group"><label>签单日期</label><input type="date" id="signDate"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>商业险起保期</label><input type="date" id="bizStartDate"></div>
+<div class="form-group"><label>交强险起保期</label><input type="date" id="forceStartDate"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>商业险保费</label><input type="number" id="bizPremium" oninput="calcTotal()"></div>
+<div class="form-group"><label>交强险保费</label><input type="number" id="forcePremium" oninput="calcTotal()"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>车船税</label><input type="number" id="taxPremium" oninput="calcTotal()"></div>
+<div class="form-group"><label>总保费 *</label><input type="number" id="totalPremiumInput"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>佣金</label><input type="number" id="commission"></div>
+<div class="form-group"><label>代理费</label><input type="number" id="agencyFee"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>业务员</label><input type="text" id="salesman"></div>
+<div class="form-group"><label>备注</label><input type="text" id="remark"></div>
+</div>
+<div style="display:flex;gap:10px;margin-top:20px;">
+<button class="btn btn-primary" style="flex:1" onclick="saveRecord()">💾 保存</button>
+<button class="btn btn-secondary" style="flex:1" onclick="clearForm()">🔄 清空</button>
+</div>
+</div>
+
+<div class="panel" id="statsPanel">
+<div style="background:white;border-radius:10px;padding:20px;margin-bottom:15px;">
+<h3 style="margin-bottom:15px;color:#1a56db">📊 总体概况</h3>
+<table style="width:100%;border-collapse:collapse;font-size:13px;">
+<tr><td>总客户数</td><td id="ovTotal" style="text-align:right;font-weight:bold"></td></tr>
+<tr><td>总保费</td><td id="ovPremium" style="text-align:right;font-weight:bold"></td></tr>
+<tr><td>净收益（佣金-代理费）</td><td id="ovProfit" style="text-align:right;font-weight:bold;color:#10b981"></td></tr>
+<tr><td>平均保费</td><td id="ovAvg" style="text-align:right;font-weight:bold"></td></tr>
+<tr><td>总佣金</td><td id="ovCommission" style="text-align:right;font-weight:bold;color:#1a56db"></td></tr>
+<tr><td>总代理费</td><td id="ovAgency" style="text-align:right;font-weight:bold;color:#f59e0b"></td></tr>
+</table>
+</div>
+<div style="background:white;border-radius:10px;padding:20px;margin-bottom:15px;">
+<h3 style="margin-bottom:15px;color:#1a56db">🏢 按保险公司统计</h3>
+<div id="companyStats"></div>
+</div>
+<div style="background:white;border-radius:10px;padding:20px;margin-bottom:15px;">
+<h3 style="margin-bottom:15px;color:#1a56db">👤 按业务员统计</h3>
+<div id="salesmanStats"></div>
+</div>
+<div style="background:white;border-radius:10px;padding:20px;margin-bottom:15px;">
+<h3 style="margin-bottom:15px;color:#1a56db">📈 月度业绩趋势</h3>
+<canvas id="trendChart" style="width:100%;max-height:220px;"></canvas>
+<div id="trendTable" style="margin-top:15px;"></div>
+</div>
+
+<div id="warningBox" style="display:none;background:#fee2e2;border:2px solid #fca5a5;padding:15px;border-radius:10px;margin-bottom:15px;">
+<h4 style="color:#dc2626;margin-bottom:10px">🔴 只承保商业险（缺少交强险）</h4>
+<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr><th>客户姓名</th><th>车牌</th><th>业务员</th><th style="text-align:right">商业险保费</th></tr></thead><tbody id="warningList"></tbody></table>
+</div>
+</div>
+
+<div class="panel" id="importPanel">
+<div style="background:white;border-radius:10px;padding:20px;">
+<h3 style="margin-bottom:15px;color:#1a56db">📥 导入Excel/CSV文件</h3>
+<p style="color:#666;margin:10px 0;">支持 .xlsx、.xls、.csv 格式 | <span style="color:#f59e0b">⚠️ 车牌相同会覆盖更新</span></p>
+<input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)">
+<button class="btn btn-success" onclick="document.getElementById('fileInput').click()">📁 选择文件</button>
+<div id="fileInfo" style="margin-top:15px;"></div>
+<div id="previewTable" style="margin-top:15px;max-height:300px;overflow:auto;"></div>
+<button class="btn btn-primary" id="importBtn" style="display:none;margin-top:15px;" onclick="doImport()">✅ 确认导入</button>
+</div>
+</div>
+
+<div class="panel" id="exportPanel">
+<div style="background:white;border-radius:10px;padding:20px;">
+<h3 style="margin-bottom:15px;color:#1a56db">📤 导出数据</h3>
+<div style="display:flex;gap:10px;margin-bottom:15px;">
+<button class="btn btn-success" onclick="exportCSV()">📊 导出CSV</button>
+<button class="btn btn-primary" onclick="exportExcel()">📗 导出Excel</button>
+</div>
+<p style="color:#666;font-size:13px;">CSV格式用Excel或WPS直接打开即可</p>
+</div>
+</div>
+</div>
+
+
+<div class="panel" id="renewalPanel">
+<div style="background:white;border-radius:10px;padding:20px;margin-bottom:15px;">
+  <h3 style="margin-bottom:5px;color:#1a56db">🔔 续保提醒</h3>
+  <p style="color:#666;font-size:12px;margin-bottom:15px;">根据商业险/交强险起保日期自动计算，提前30天提醒</p>
+
+  <!-- 筛选 -->
+  <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;">
+    <select id="renewalDays" onchange="renderRenewalList()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+      <option value="7">7天内到期</option>
+      <option value="15">15天内到期</option>
+      <option value="30" selected>30天内到期</option>
+      <option value="60">60天内到期</option>
+      <option value="90">90天内到期</option>
+      <option value="0">已过期</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="renderRenewalList()">🔍 查询</button>
+  </div>
+
+  <!-- 统计 -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px;" id="renewalStats"></div>
+
+  <!-- 列表 -->
+  <div id="renewalList"></div>
+</div>
+</div>
+
+<div class="panel" id="followupPanel">
+<div style="background:white;border-radius:10px;padding:20px;margin-bottom:15px;">
+  <h3 style="margin-bottom:15px;color:#1a56db">📝 客户跟进记录</h3>
+  
+  <!-- 新增跟进记录 -->
+  <div style="background:#f8faff;border:1px solid #dbeafe;border-radius:8px;padding:15px;margin-bottom:20px;">
+    <h4 style="color:#1a56db;margin-bottom:12px;font-size:14px;">➕ 新增跟进</h4>
+    <div class="form-row">
+      <div class="form-group">
+        <label>客户姓名/车牌</label>
+        <input type="text" id="fuCustomer" placeholder="输入客户姓名或车牌号">
+      </div>
+      <div class="form-group">
+        <label>跟进日期</label>
+        <input type="date" id="fuDate">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>跟进状态</label>
+        <select id="fuStatus">
+          <option value="待联系">📞 待联系</option>
+          <option value="已联系">✅ 已联系</option>
+          <option value="意向客户">🔥 意向客户</option>
+          <option value="已成交">💰 已成交</option>
+          <option value="暂不续保">❌ 暂不续保</option>
+          <option value="需再跟进">🔄 需再跟进</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>下次跟进日期</label>
+        <input type="date" id="fuNextDate">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>跟进备注</label>
+      <input type="text" id="fuRemark" placeholder="记录跟进内容，如：客户说下周考虑、已发报价单等">
+    </div>
+    <button class="btn btn-primary" onclick="saveFollowup()" style="width:100%;margin-top:5px;">💾 保存跟进记录</button>
+  </div>
+
+  <!-- 跟进记录列表 -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <h4 style="color:#374151;font-size:14px;">📋 跟进记录列表</h4>
+    <div style="display:flex;gap:8px;">
+      <select id="fuFilterStatus" onchange="renderFollowupList()" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+        <option value="">全部状态</option>
+        <option value="待联系">待联系</option>
+        <option value="已联系">已联系</option>
+        <option value="意向客户">意向客户</option>
+        <option value="已成交">已成交</option>
+        <option value="暂不续保">暂不续保</option>
+        <option value="需再跟进">需再跟进</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" onclick="clearFollowupFilter()">重置</button>
+    </div>
+  </div>
+  <div id="followupList" style="max-height:400px;overflow-y:auto;"></div>
+</div>
+</div>
+
+<div class="modal" id="editModal">
+<div class="modal-content">
+<div class="modal-header"><h3>✏️ 编辑记录</h3><button class="modal-close" onclick="closeEditModal()">&times;</button></div>
+<div class="modal-body">
+<input type="hidden" id="editId">
+<div class="form-row">
+<div class="form-group"><label>客户姓名 *</label><input type="text" id="editCustomerName"></div>
+<div class="form-group"><label>联系电话</label><input type="tel" id="editCustomerPhone"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>车牌号 *</label><input type="text" id="editPlate"></div>
+<div class="form-group"><label>车架号</label><input type="text" id="editVin"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>使用性质</label><input type="text" id="editBrand"></div>
+<div class="form-group"><label>初登日期</label><input type="date" id="editFirstRegDate"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>保险公司</label><input type="text" id="editCompany"></div>
+<div class="form-group"><label>签单日期</label><input type="date" id="editSignDate"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>商业险起保期</label><input type="date" id="editBizStartDate"></div>
+<div class="form-group"><label>交强险起保期</label><input type="date" id="editForceStartDate"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>商业险保费</label><input type="number" id="editBizPremium"></div>
+<div class="form-group"><label>交强险保费</label><input type="number" id="editForcePremium"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>车船税</label><input type="number" id="editTaxPremium"></div>
+<div class="form-group"><label>总保费</label><input type="number" id="editTotalPremium"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>佣金</label><input type="number" id="editCommission"></div>
+<div class="form-group"><label>代理费</label><input type="number" id="editAgencyFee"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>业务员</label><input type="text" id="editSalesman"></div>
+<div class="form-group"><label>备注</label><input type="text" id="editRemark"></div>
+</div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+<button class="btn btn-primary" onclick="updateRecord()">保存</button>
+</div>
+</div>
+</div>
+
+<script src="https://cdn.staticfile.org/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+var CORRECT_PASSWORD = '589842';
+
+function checkPassword() {
+  var input = document.getElementById('loginPassword').value;
+  if (input === CORRECT_PASSWORD) {
+    document.getElementById('loginOverlay').style.display = 'none';
+    init();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('loginPassword').value = '';
+  }
+}
+
+document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') checkPassword();
+});
+
+var SUPABASE_URL = 'https://pipyqyaikywzpdlxdooj.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcHlxeWFpa3l3enBkbHhkb29qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDUzNjgsImV4cCI6MjA4OTkyMTM2OH0.61p44pO1GCh7Vzpy3mKr2yi-1aeWhRygqBBey1_EbMk';
+var records = [];
+var filteredData = [];
+var currentPage = 1;
+var pageSize = 20;
+var importData = [];
+
+function init() {
+  document.getElementById('signDate').valueAsDate = new Date();
+  // 显示今日日期
+  var now = new Date();
+  var dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日';
+  document.getElementById('todayDate').textContent = dateStr;
+  loadData();
+}
+
+function showLoading(show) {
+  document.getElementById('loadingState').style.display = show ? 'block' : 'none';
+  document.getElementById('dataTable').style.display = show ? 'none' : 'table';
+}
+
+async function loadData() {
+  showLoading(true);
+  try {
+    var resp = await fetch(SUPABASE_URL + '/rest/v1/insurance_records?select=*&order=sign_date.desc', {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: 'Bearer ' + SUPABASE_KEY
+      }
+    });
+    if (!resp.ok) throw new Error('API error: ' + resp.status);
+    records = await resp.json();
+    filteredData = records;
+    currentPage = 1;
+    renderTable();
+    updateStats();
+    updateTodayPanel();
+    updateRenewalBadge();
+    updateFilterOptions();
+  } catch(e) {
+    showToast('加载失败: ' + e.message, true);
+  }
+  showLoading(false);
+}
+
+// 今日业绩面板
+function updateTodayPanel() {
+  var today = new Date().toISOString().slice(0, 10);
+  var todayRecords = records.filter(function(r) { return r.sign_date === today; });
+  
+  var count = todayRecords.length;
+  var premium = todayRecords.reduce(function(s, r) { return s + (r.total_premium || 0); }, 0);
+  var commission = todayRecords.reduce(function(s, r) { return s + (r.commission || 0); }, 0);
+  var agencyFee = todayRecords.reduce(function(s, r) { return s + (r.agency_fee || 0); }, 0);
+  var profit = commission - agencyFee;
+
+  document.getElementById('todayCount').textContent = count + ' 单';
+  document.getElementById('todayPremium').textContent = '¥' + premium.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('todayCommission').textContent = '¥' + commission.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('todayProfit').textContent = '¥' + profit.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  // 今日明细列表
+  var listHtml = '';
+  if (todayRecords.length === 0) {
+    listHtml = '<div style="text-align:center;opacity:0.6;font-size:12px;padding:5px 0;">今日暂无业务，加油！💪</div>';
+  } else {
+    todayRecords.forEach(function(r) {
+      listHtml += '<div class="today-list-item">' +
+        '<span>' + (r.customer_name || '') + ' · ' + (r.plate || '') + '</span>' +
+        '<span>¥' + ((r.total_premium || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})) + ' / 佣金¥' + ((r.commission || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})) + '</span>' +
+        '</div>';
+    });
+  }
+  document.getElementById('todayList').innerHTML = listHtml;
+}
+
+function renderTable() {
+  var tb = document.getElementById('recordsTable');
+  var start = (currentPage - 1) * pageSize;
+  var end = start + pageSize;
+  var pageData = filteredData.slice(start, end);
+  var totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+  
+  if (!pageData.length) {
+    tb.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:30px;">暂无数据</td></tr>';
+    renderPagination(0, 0, 0);
+    return;
+  }
+  
+  tb.innerHTML = pageData.map(function(r, i) {
+    var noForce = (!r.force_premium || r.force_premium === 0);
+    var rowStyle = noForce ? 'background:#fee2e2' : '';
+    return '<tr style="' + rowStyle + '"><td>' + (start + i + 1) + '</td><td><b>' + (r.customer_name || '') + '</b></td><td>' + (r.customer_phone || '-') + '</td><td><b style="color:#1a56db">' + (r.plate || '') + '</b></td><td>' + (r.brand || '-') + '</td><td>' + (r.company || '-') + '</td><td>' + (r.sign_date || '-') + '</td><td><b>¥' + ((r.total_premium || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})) + '</b></td><td style="color:#10b981">¥' + ((r.commission || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})) + '</td><td style="color:#f59e0b">¥' + ((r.agency_fee || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})) + '</td><td>' + (r.salesman || '-') + '</td><td><button class="btn btn-primary btn-sm" onclick="editRecord(' + (start + i) + ')">编辑</button> <button class="btn btn-danger btn-sm" onclick="deleteRecord(' + (start + i) + ')">删除</button></td></tr>';
+  }).join('');
+  
+  renderPagination(currentPage, totalPages, filteredData.length);
+}
+
+function renderPagination(page, total, totalCount) {
+  var p = document.getElementById('pagination');
+  if (total <= 1) { p.innerHTML = ''; return; }
+  var html = '<button class="btn btn-secondary btn-sm" onclick="changePage(' + (page - 1) + ')"' + (page === 1 ? ' disabled' : '') + '>上一页</button>';
+  html += '<span style="padding:5px 10px;">第 ' + page + ' / ' + total + ' 页 (共' + totalCount + '条)</span>';
+  html += '<button class="btn btn-secondary btn-sm" onclick="changePage(' + (page + 1) + ')"' + (page === total ? ' disabled' : '') + '>下一页</button>';
+  p.innerHTML = html;
+}
+
+function changePage(n) { currentPage = n; renderTable(); }
+
+function updateStats() {
+  var total = records.length;
+  var tp = records.reduce(function(s, r) { return s + (r.total_premium || 0); }, 0);
+  var profit = records.reduce(function(s, r) { return s + (r.commission || 0) - (r.agency_fee || 0); }, 0);
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statPremium').textContent = '¥' + tp.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('statProfit').textContent = '¥' + profit.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function switchTab(n) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.getElementById(n + 'Panel').classList.add('active');
+  if(n==='stats') renderStats(); if(n==='renewal') renderRenewalList(); if(n==='followup'){renderFollowupList();initFollowupDate();}
+}
+
+function calcTotal() {
+  document.getElementById('totalPremiumInput').value = ((+document.getElementById('bizPremium').value) || 0) + ((+document.getElementById('forcePremium').value) || 0) + ((+document.getElementById('taxPremium').value) || 0);
+}
+
+async function saveRecord() {
+  var name = document.getElementById('customerName').value.trim();
+  var plate = document.getElementById('plate').value.trim();
+  var total = +document.getElementById('totalPremiumInput').value || 0;
+  if (!name || !plate || !total) { showToast('请填写必填项', true); return; }
+  var d = {
+    customer_name: name,
+    customer_phone: document.getElementById('customerPhone').value.trim(),
+    plate: plate,
+    vin: document.getElementById('vin').value.trim(),
+    brand: document.getElementById('brand').value.trim(),
+    company: document.getElementById('company').value.trim(),
+    biz_premium: +document.getElementById('bizPremium').value || 0,
+    force_premium: +document.getElementById('forcePremium').value || 0,
+    tax_premium: +document.getElementById('taxPremium').value || 0,
+    total_premium: total,
+    commission: +document.getElementById('commission').value || 0,
+    agency_fee: +document.getElementById('agencyFee').value || 0,
+    salesman: document.getElementById('salesman').value.trim(),
+    remark: document.getElementById('remark').value.trim()
+  };
+  var firstReg = document.getElementById('firstRegDate').value;
+  var signDt = document.getElementById('signDate').value;
+  var bizStart = document.getElementById('bizStartDate').value;
+  var forceStart = document.getElementById('forceStartDate').value;
+  if (firstReg) d.first_reg_date = firstReg;
+  if (signDt) d.sign_date = signDt;
+  if (bizStart) d.biz_start_date = bizStart;
+  if (forceStart) d.force_start_date = forceStart;
+  try {
+    var resp = await fetch(SUPABASE_URL + '/rest/v1/insurance_records', {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+      body: JSON.stringify(d)
+    });
+    if (!resp.ok) throw new Error('保存失败');
+    showToast('保存成功');
+    clearForm();
+    await loadData();
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelector('.tab:nth-child(1)').classList.add('active');
+    document.getElementById('listPanel').classList.add('active');
+  } catch(e) { showToast('保存失败: ' + e.message, true); }
+}
+
+function clearForm() {
+  document.querySelectorAll('#addPanel input').forEach(function(e) { e.value = ''; });
+  document.getElementById('signDate').valueAsDate = new Date();
+}
+
+async function searchRecords() {
+  var kw = document.getElementById('searchInput').value.trim();
+  var sm = document.getElementById('filterSalesman').value;
+  var co = document.getElementById('filterCompany').value;
+  filteredData = records.filter(function(r) {
+    var matchKw = !kw || (r.customer_name||'').indexOf(kw)!==-1 || (r.customer_phone||'').indexOf(kw)!==-1 || (r.plate||'').indexOf(kw)!==-1;
+    var matchSm = !sm || (r.salesman||'未分配') === sm;
+    var matchCo = !co || (r.company||'') === co;
+    return matchKw && matchSm && matchCo;
+  });
+  currentPage = 1;
+  renderTable();
+}
+
+function editRecord(idx) {
+  var r = filteredData[idx];
+  if (!r) return;
+  document.getElementById('editId').value = idx;
+  document.getElementById('editCustomerName').value = r.customer_name || '';
+  document.getElementById('editCustomerPhone').value = r.customer_phone || '';
+  document.getElementById('editPlate').value = r.plate || '';
+  document.getElementById('editVin').value = r.vin || '';
+  document.getElementById('editBrand').value = r.brand || '';
+  document.getElementById('editFirstRegDate').value = r.first_reg_date || '';
+  document.getElementById('editCompany').value = r.company || '';
+  document.getElementById('editSignDate').value = r.sign_date || '';
+  document.getElementById('editBizStartDate').value = r.biz_start_date || '';
+  document.getElementById('editForceStartDate').value = r.force_start_date || '';
+  document.getElementById('editBizPremium').value = r.biz_premium || '';
+  document.getElementById('editForcePremium').value = r.force_premium || '';
+  document.getElementById('editTaxPremium').value = r.tax_premium || '';
+  document.getElementById('editTotalPremium').value = r.total_premium || '';
+  document.getElementById('editCommission').value = r.commission || '';
+  document.getElementById('editAgencyFee').value = r.agency_fee || '';
+  document.getElementById('editSalesman').value = r.salesman || '';
+  document.getElementById('editRemark').value = r.remark || '';
+  document.getElementById('editModal').classList.add('active');
+}
+
+function closeEditModal() { document.getElementById('editModal').classList.remove('active'); }
+
+async function updateRecord() {
+  var idx = +document.getElementById('editId').value;
+  var r = filteredData[idx];
+  var d = {
+    customer_name: document.getElementById('editCustomerName').value.trim(),
+    customer_phone: document.getElementById('editCustomerPhone').value.trim(),
+    plate: document.getElementById('editPlate').value.trim(),
+    vin: document.getElementById('editVin').value.trim(),
+    brand: document.getElementById('editBrand').value.trim(),
+    first_reg_date: document.getElementById('editFirstRegDate').value,
+    company: document.getElementById('editCompany').value.trim(),
+    sign_date: document.getElementById('editSignDate').value,
+    biz_start_date: document.getElementById('editBizStartDate').value,
+    force_start_date: document.getElementById('editForceStartDate').value,
+    biz_premium: +document.getElementById('editBizPremium').value || 0,
+    force_premium: +document.getElementById('editForcePremium').value || 0,
+    tax_premium: +document.getElementById('editTaxPremium').value || 0,
+    total_premium: +document.getElementById('editTotalPremium').value || 0,
+    commission: +document.getElementById('editCommission').value || 0,
+    agency_fee: +document.getElementById('editAgencyFee').value || 0,
+    salesman: document.getElementById('editSalesman').value.trim(),
+    remark: document.getElementById('editRemark').value.trim()
+  };
+  try {
+    var resp = await fetch(SUPABASE_URL + '/rest/v1/insurance_records?id=eq.' + r.id, {
+      method: 'PATCH',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(d)
+    });
+    if (!resp.ok) throw new Error('更新失败');
+    showToast('更新成功');
+    closeEditModal();
+    await loadData();
+  } catch(e) { showToast('更新失败', true); }
+}
+
+async function deleteRecord(idx) {
+  if (!confirm('确定删除?')) return;
+  var r = filteredData[idx];
+  try {
+    var resp = await fetch(SUPABASE_URL + '/rest/v1/insurance_records?id=eq.' + r.id, {
+      method: 'DELETE',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+    });
+    if (!resp.ok) throw new Error('删除失败');
+    showToast('已删除');
+    await loadData();
+  } catch(e) { showToast('删除失败', true); }
+}
+
+function exportCSV() {
+  if (!records.length) { showToast('暂无数据', true); return; }
+  var h = ['客户姓名','电话','车牌','车架号','使用性质','初登日期','公司','签单日期','商业险起','交强险起','商业险保费','交强险保费','车船税','总保费','佣金','代理费','业务员','备注'];
+  var csv = '\uFEFF' + h.join(',') + '\r\n';
+  records.forEach(function(r) {
+    var row = [r.customer_name||'',r.customer_phone||'',r.plate||'',r.vin||'',r.brand||'',r.first_reg_date||'',r.company||'',r.sign_date||'',r.biz_start_date||'',r.force_start_date||'',r.biz_premium||0,r.force_premium||0,r.tax_premium||0,r.total_premium||0,r.commission||0,r.agency_fee||0,r.salesman||'',r.remark||''];
+    csv += row.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',') + '\r\n';
+  });
+  downloadBlob(csv, '车险数据_' + new Date().toISOString().slice(0,10) + '.csv', 'text/csv;charset=utf-8');
+  showToast('CSV导出成功');
+}
+
+function exportExcel() {
+  if (!records.length) { showToast('暂无数据', true); return; }
+  if (typeof XLSX === 'undefined') { showToast('Excel库加载中，请稍后重试', true); return; }
+  var data = records.map(function(r) {
+    return {'客户姓名':r.customer_name||'','电话':r.customer_phone||'','车牌':r.plate||'','车架号':r.vin||'','使用性质':r.brand||'','初登日期':r.first_reg_date||'','公司':r.company||'','签单日期':r.sign_date||'','商业险起期':r.biz_start_date||'','交强险起期':r.force_start_date||'','商业险保费':r.biz_premium||0,'交强险保费':r.force_premium||0,'车船税':r.tax_premium||0,'总保费':r.total_premium||0,'佣金':r.commission||0,'代理费':r.agency_fee||0,'业务员':r.salesman||'','备注':r.remark||''};
+  });
+  var ws = XLSX.utils.json_to_sheet(data);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '车险数据');
+  XLSX.writeFile(wb, '车险数据_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  showToast('Excel导出成功');
+}
+
+function downloadBlob(content, filename, type) {
+  var blob = new Blob([content], {type: type});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function getFieldValue(row, fieldNames) {
+  for (var i = 0; i < fieldNames.length; i++) {
+    var val = row[fieldNames[i]];
+    if (val !== undefined && val !== null && val !== '') return val;
+  }
+  return '';
+}
+
+function getFieldNumber(row, fieldNames) {
+  for (var i = 0; i < fieldNames.length; i++) {
+    var val = row[fieldNames[i]];
+    if (val !== undefined && val !== null && val !== '') {
+      var num = parseFloat(String(val).replace(/[^\d.-]/g, ''));
+      if (!isNaN(num)) return num;
+    }
+  }
+  return 0;
+}
+
+function handleFileSelect(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('fileInfo').innerHTML = '<p>已选: <b>' + file.name + '</b></p>';
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = new Uint8Array(ev.target.result);
+      var wb = XLSX.read(data, {type: 'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      importData = XLSX.utils.sheet_to_json(ws);
+      if (importData.length) {
+        var keys = Object.keys(importData[0]);
+        var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;"><tr>';
+        keys.forEach(function(k) { html += '<th style="background:#f3f4f6;padding:8px;text-align:left;">' + k + '</th>'; });
+        html += '</tr>';
+        importData.slice(0, 5).forEach(function(row) {
+          html += '<tr>';
+          keys.forEach(function(k) { html += '<td style="padding:8px;border-bottom:1px solid #e5e7eb;">' + (row[k] || '') + '</td>'; });
+          html += '</tr>';
+        });
+        if (importData.length > 5) html += '<tr><td colspan="' + keys.length + '" style="text-align:center;color:#666;padding:10px;">还有' + (importData.length - 5) + '行...</td></tr>';
+        html += '</table><p style="margin-top:10px">共 ' + importData.length + ' 行</p>';
+        document.getElementById('previewTable').innerHTML = html;
+        document.getElementById('importBtn').style.display = 'inline-block';
+      } else {
+        document.getElementById('previewTable').innerHTML = '<p style="color:red">文件中没有数据</p>';
+      }
+    } catch(err) { showToast('文件读取失败', true); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function doImport() {
+  if (!importData.length) { showToast('没有可导入的数据', true); return; }
+  var success = 0, updated = 0, fail = 0;
+  showToast('正在导入，请稍候...');
+  for (var i = 0; i < importData.length; i++) {
+    var row = importData[i];
+    var plate = getFieldValue(row, ['车牌','plate','车牌号','车牌号码','car_plate']).trim().toUpperCase();
+    if (!plate) { fail++; continue; }
+    var data = {customer_name:getFieldValue(row,['客户姓名','customer_name','姓名','name']),customer_phone:getFieldValue(row,['电话','customer_phone','手机','phone','mobile']),plate:plate,vin:getFieldValue(row,['车架号','vin','车架','车辆识别代号','frame_no']),brand:getFieldValue(row,['使用性质','brand','车型','car_type']),first_reg_date:getFieldValue(row,['初登日期','first_reg_date','初登','注册日期']),company:getFieldValue(row,['公司','company','保险公司','insurer']),sign_date:getFieldValue(row,['签单日期','sign_date','签单日','投保日期']),biz_start_date:getFieldValue(row,['商业险起','biz_start_date','商业险起期']),force_start_date:getFieldValue(row,['交强险起','force_start_date','交强险起期','强制险起期']),biz_premium:getFieldNumber(row,['商业险保费','biz_premium','商业险']),force_premium:getFieldNumber(row,['交强险保费','force_premium','交强险','强制险']),tax_premium:getFieldNumber(row,['车船税','tax_premium','车船']),total_premium:getFieldNumber(row,['总保费','total_premium','保费','合计']),commission:getFieldNumber(row,['佣金','commission','提成','手续费']),agency_fee:getFieldNumber(row,['代理费','agency_fee','代理','服务费']),salesman:getFieldValue(row,['业务员','salesman','销售','员工']),remark:getFieldValue(row,['备注','remark','notes'])};
+    try {
+      var existResp = await fetch(SUPABASE_URL+'/rest/v1/insurance_records?plate=eq.'+encodeURIComponent(plate),{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+      var exist = await existResp.json();
+      if (exist && exist.length > 0) {
+        var updateResp = await fetch(SUPABASE_URL+'/rest/v1/insurance_records?id=eq.'+exist[0].id,{method:'PATCH',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(data)});
+        if (updateResp.ok) updated++; else fail++;
+      } else {
+        var insertResp = await fetch(SUPABASE_URL+'/rest/v1/insurance_records',{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify(data)});
+        if (insertResp.ok) success++; else fail++;
+      }
+    } catch(e) { fail++; }
+  }
+  showToast('导入完成: 新增'+success+'条, 更新'+updated+'条, 失败'+fail+'条');
+  document.getElementById('fileInfo').innerHTML='';
+  document.getElementById('previewTable').innerHTML='';
+  document.getElementById('importBtn').style.display='none';
+  document.getElementById('fileInput').value='';
+  importData=[];
+  await loadData();
+  document.querySelectorAll('.tab')[0].click();
+}
+
+function renderStats() {
+  if (!records.length) return;
+  renderTrendChart();
+  var total = records.length;
+  var tp = records.reduce(function(s,r){return s+(r.total_premium||0)},0);
+  var tc = records.reduce(function(s,r){return s+(r.commission||0)-(r.agency_fee||0)},0);
+  var avg = total > 0 ? Math.round(tp/total) : 0;
+  var totalCom = records.reduce(function(s,r){return s+(r.commission||0)},0);
+  var totalAgy = records.reduce(function(s,r){return s+(r.agency_fee||0)},0);
+  document.getElementById("ovTotal").textContent = total;
+  document.getElementById("ovPremium").textContent = "¥"+tp.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById("ovProfit").textContent = "¥"+tc.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById("ovAvg").textContent = "¥"+avg.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById("ovCommission").textContent = "¥"+totalCom.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById("ovAgency").textContent = "¥"+totalAgy.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  var byCompany={};
+  records.forEach(function(r){var co=r.company||'未知';if(!byCompany[co])byCompany[co]={c:0,p:0};byCompany[co].c++;byCompany[co].p+=r.total_premium||0;});
+  var sortedCompany=Object.keys(byCompany).sort(function(a,b){return byCompany[b].p-byCompany[a].p});
+  var maxP=sortedCompany.length>0?byCompany[sortedCompany[0]].p:1;
+  var coHtml='';
+  sortedCompany.forEach(function(co){var s=byCompany[co];var pct=Math.round(s.p/maxP*100);coHtml+='<div style="margin:10px 0;"><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>'+co+'</span><span>'+s.c+'单 ¥'+s.p.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</span></div><div style="height:20px;background:#e5e7eb;border-radius:4px;"><div style="height:100%;width:'+pct+'%;background:#1a56db;border-radius:4px;"></div></div></div>';});
+  document.getElementById("companyStats").innerHTML=coHtml||'<p style="color:#666">暂无数据</p>';
+  var bySalesman={};
+  records.forEach(function(r){var sm=r.salesman||'未分配';if(!bySalesman[sm])bySalesman[sm]={c:0,p:0};bySalesman[sm].c++;bySalesman[sm].p+=r.total_premium||0;});
+  var sortedSalesman=Object.keys(bySalesman).sort(function(a,b){return bySalesman[b].p-bySalesman[a].p});
+  var maxSP=sortedSalesman.length>0?bySalesman[sortedSalesman[0]].p:1;
+  var smHtml='';
+  sortedSalesman.forEach(function(sm){var s=bySalesman[sm];var pct=Math.round(s.p/maxSP*100);smHtml+='<div style="margin:10px 0;"><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>'+sm+'</span><span>'+s.c+'单 ¥'+s.p.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+'</span></div><div style="height:20px;background:#e5e7eb;border-radius:4px;"><div style="height:100%;width:'+pct+'%;background:#10b981;border-radius:4px;"></div></div></div>';});
+  document.getElementById("salesmanStats").innerHTML=smHtml||'<p style="color:#666">暂无数据</p>';
+  var noForceList=records.filter(function(r){return!r.force_premium||r.force_premium===0;});
+  if(noForceList.length>0){
+    document.getElementById("warningBox").style.display="block";
+    var wh='';
+    noForceList.slice(0,10).forEach(function(r){wh+='<tr><td>'+(r.customer_name||'')+'</td><td>'+r.plate+'</td><td>'+(r.salesman||'未分配')+'</td><td style="text-align:right">¥'+((r.biz_premium||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))+'</td></tr>';});
+    document.getElementById("warningList").innerHTML=wh;
+  } else {
+    document.getElementById("warningBox").style.display="none";
+  }
+}
+
+
+
+
+// ===== 筛选功能 =====
+function updateFilterOptions() {
+  var salesmen = [...new Set(records.map(function(r){return r.salesman||'未分配';}).filter(Boolean))].sort();
+  var companies = [...new Set(records.map(function(r){return r.company||'';}).filter(Boolean))].sort();
+  
+  var smSel = document.getElementById('filterSalesman');
+  var curSm = smSel.value;
+  smSel.innerHTML = '<option value="">全部业务员</option>' + salesmen.map(function(s){return '<option value="'+s+'"'+(s===curSm?' selected':'')+'>'+s+'</option>';}).join('');
+  
+  var coSel = document.getElementById('filterCompany');
+  var curCo = coSel.value;
+  coSel.innerHTML = '<option value="">全部公司</option>' + companies.map(function(c){return '<option value="'+c+'"'+(c===curCo?' selected':'')+'>'+c+'</option>';}).join('');
+}
+
+function resetFilter() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('filterSalesman').value = '';
+  document.getElementById('filterCompany').value = '';
+  filteredData = records;
+  currentPage = 1;
+  renderTable();
+}
+
+// ===== 月度趋势图 =====
+function renderTrendChart() {
+  // 统计最近6个月数据
+  var monthMap = {};
+  var today = new Date();
+  for (var i = 5; i >= 0; i--) {
+    var d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    var key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    monthMap[key] = {premium:0, count:0, commission:0};
+  }
+  
+  records.forEach(function(r) {
+    if (!r.sign_date) return;
+    var key = r.sign_date.slice(0,7);
+    if (monthMap[key]) {
+      monthMap[key].premium += r.total_premium || 0;
+      monthMap[key].count++;
+      monthMap[key].commission += (r.commission||0) - (r.agency_fee||0);
+    }
+  });
+  
+  var months = Object.keys(monthMap).sort();
+  var maxPremium = Math.max.apply(null, months.map(function(m){return monthMap[m].premium;})) || 1;
+  
+  // 绘制简单柱状图（纯CSS）
+  var chartHtml = '<div style="display:flex;align-items:flex-end;gap:8px;height:160px;padding:10px 0;border-bottom:2px solid #e5e7eb;">';
+  months.forEach(function(m) {
+    var d = monthMap[m];
+    var h = Math.max(4, Math.round(d.premium / maxPremium * 140));
+    var label = m.slice(5) + '月';
+    chartHtml += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">' +
+      '<div style="font-size:10px;color:#1a56db;font-weight:bold;">' + (d.premium > 0 ? '¥'+Math.round(d.premium/1000)+'k' : '') + '</div>' +
+      '<div style="width:100%;background:#1a56db;border-radius:3px 3px 0 0;height:'+h+'px;opacity:'+(d.premium>0?'1':'0.15')+';"></div>' +
+    '</div>';
+  });
+  chartHtml += '</div>';
+  
+  // 月份标签
+  chartHtml += '<div style="display:flex;gap:8px;margin-top:6px;">';
+  months.forEach(function(m) {
+    chartHtml += '<div style="flex:1;text-align:center;font-size:11px;color:#666;">' + m.slice(5) + '月</div>';
+  });
+  chartHtml += '</div>';
+  
+  document.getElementById('trendChart').outerHTML = '<div id="trendChart">' + chartHtml + '</div>';
+  
+  // 月度明细表
+  var tableHtml = '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;">' +
+    '<thead><tr style="background:#f9fafb;"><th style="padding:8px;text-align:left;">月份</th><th style="padding:8px;text-align:right;">单数</th><th style="padding:8px;text-align:right;">总保费</th><th style="padding:8px;text-align:right;color:#10b981;">净收益</th></tr></thead><tbody>';
+  months.reverse().forEach(function(m) {
+    var d = monthMap[m];
+    tableHtml += '<tr style="border-bottom:1px solid #f3f4f6;">' +
+      '<td style="padding:8px;">' + m + '</td>' +
+      '<td style="padding:8px;text-align:right;">' + d.count + ' 单</td>' +
+      '<td style="padding:8px;text-align:right;font-weight:bold;">¥' + d.premium.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>' +
+      '<td style="padding:8px;text-align:right;color:#10b981;font-weight:bold;">¥' + d.commission.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) + '</td>' +
+    '</tr>';
+  });
+  tableHtml += '</tbody></table>';
+  document.getElementById('trendTable').innerHTML = tableHtml;
+}
+
+// ===== 续保提醒功能 =====
+function renderRenewalList() {
+  var days = parseInt(document.getElementById('renewalDays').value);
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  
+  var results = [];
+  
+  records.forEach(function(r) {
+    // 检查商业险
+    if (r.biz_start_date) {
+      var bizDate = new Date(r.biz_start_date);
+      bizDate.setFullYear(bizDate.getFullYear() + 1); // 续保日期 = 起保日期 + 1年
+      var diffDays = Math.ceil((bizDate - today) / (1000 * 60 * 60 * 24));
+      if (days === 0 ? diffDays < 0 : (diffDays >= 0 && diffDays <= days)) {
+        results.push({
+          customer: r.customer_name || '',
+          plate: r.plate || '',
+          phone: r.customer_phone || '',
+          company: r.company || '',
+          salesman: r.salesman || '',
+          type: '商业险',
+          renewDate: r.biz_start_date,
+          expireDate: bizDate.toISOString().slice(0,10),
+          diffDays: diffDays,
+          premium: r.biz_premium || 0
+        });
+      }
+    }
+    // 检查交强险
+    if (r.force_start_date) {
+      var forceDate = new Date(r.force_start_date);
+      forceDate.setFullYear(forceDate.getFullYear() + 1);
+      var diffDays2 = Math.ceil((forceDate - today) / (1000 * 60 * 60 * 24));
+      if (days === 0 ? diffDays2 < 0 : (diffDays2 >= 0 && diffDays2 <= days)) {
+        results.push({
+          customer: r.customer_name || '',
+          plate: r.plate || '',
+          phone: r.customer_phone || '',
+          company: r.company || '',
+          salesman: r.salesman || '',
+          type: '交强险',
+          renewDate: r.force_start_date,
+          expireDate: forceDate.toISOString().slice(0,10),
+          diffDays: diffDays2,
+          premium: r.force_premium || 0
+        });
+      }
+    }
+  });
+  
+  // 按到期日排序
+  results.sort(function(a,b){ return a.diffDays - b.diffDays; });
+  
+  // 统计
+  var urgent = results.filter(function(r){ return r.diffDays >= 0 && r.diffDays <= 7; }).length;
+  var warning = results.filter(function(r){ return r.diffDays > 7 && r.diffDays <= 15; }).length;
+  var normal = results.filter(function(r){ return r.diffDays > 15; }).length;
+  var expired = results.filter(function(r){ return r.diffDays < 0; }).length;
+  
+  document.getElementById('renewalStats').innerHTML =
+    '<div style="background:#fee2e2;border-radius:8px;padding:12px;text-align:center;"><div style="font-size:11px;color:#dc2626;margin-bottom:4px;">🔴 7天内到期</div><div style="font-size:22px;font-weight:bold;color:#dc2626;">' + urgent + '</div></div>' +
+    '<div style="background:#fef3c7;border-radius:8px;padding:12px;text-align:center;"><div style="font-size:11px;color:#d97706;margin-bottom:4px;">🟡 15天内到期</div><div style="font-size:22px;font-weight:bold;color:#d97706;">' + warning + '</div></div>' +
+    '<div style="background:#d1fae5;border-radius:8px;padding:12px;text-align:center;"><div style="font-size:11px;color:#059669;margin-bottom:4px;">🟢 30天内到期</div><div style="font-size:22px;font-weight:bold;color:#059669;">' + normal + '</div></div>';
+  
+  if (!results.length) {
+    document.getElementById('renewalList').innerHTML = '<div style="text-align:center;color:#999;padding:30px;">该时间段内暂无续保提醒 🎉</div>';
+    return;
+  }
+  
+  var html = results.map(function(r) {
+    var cls = r.diffDays < 0 ? 'expired' : r.diffDays <= 7 ? 'urgent' : r.diffDays <= 15 ? 'warning' : 'normal';
+    var dayText = r.diffDays < 0 ? '已过期' + Math.abs(r.diffDays) + '天' : r.diffDays === 0 ? '今天到期！' : r.diffDays + '天后到期';
+    return '<div class="renewal-item ' + cls + '">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+        '<span style="font-weight:bold;font-size:14px;">' + r.customer + ' <span style="color:#1a56db;">' + r.plate + '</span></span>' +
+        '<span class="renewal-badge ' + cls + '">' + dayText + '</span>' +
+      '</div>' +
+      '<div style="font-size:12px;color:#666;display:flex;gap:15px;flex-wrap:wrap;">' +
+        '<span>📋 ' + r.type + '</span>' +
+        '<span>📅 到期：' + r.expireDate + '</span>' +
+        '<span>🏢 ' + (r.company || '未知') + '</span>' +
+        (r.phone ? '<span>📞 ' + r.phone + '</span>' : '') +
+        (r.salesman ? '<span>👤 ' + r.salesman + '</span>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+  
+  document.getElementById('renewalList').innerHTML = html;
+}
+
+// 首页顶部显示即将到期数量
+function updateRenewalBadge() {
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var count = 0;
+  records.forEach(function(r) {
+    if (r.biz_start_date) {
+      var d = new Date(r.biz_start_date);
+      d.setFullYear(d.getFullYear() + 1);
+      var diff = Math.ceil((d - today) / (1000*60*60*24));
+      if (diff >= 0 && diff <= 30) count++;
+    }
+    if (r.force_start_date) {
+      var d2 = new Date(r.force_start_date);
+      d2.setFullYear(d2.getFullYear() + 1);
+      var diff2 = Math.ceil((d2 - today) / (1000*60*60*24));
+      if (diff2 >= 0 && diff2 <= 30) count++;
+    }
+  });
+  // 更新tab显示
+  var tabs = document.querySelectorAll('.tab');
+  tabs.forEach(function(t) {
+    if (t.textContent.indexOf('续保提醒') !== -1) {
+      t.innerHTML = '🔔 续保提醒' + (count > 0 ? ' <span style="background:#ef4444;color:white;border-radius:10px;padding:1px 6px;font-size:11px;">' + count + '</span>' : '');
+    }
+  });
+}
+
+// ===== 跟进记录功能 =====
+var followupData = JSON.parse(localStorage.getItem('xieboss_followup') || '[]');
+
+function saveFollowupToStorage() {
+  localStorage.setItem('xieboss_followup', JSON.stringify(followupData));
+}
+
+function saveFollowup() {
+  var customer = document.getElementById('fuCustomer').value.trim();
+  var date = document.getElementById('fuDate').value;
+  var status = document.getElementById('fuStatus').value;
+  var nextDate = document.getElementById('fuNextDate').value;
+  var remark = document.getElementById('fuRemark').value.trim();
+  
+  if (!customer) { showToast('请填写客户姓名或车牌', true); return; }
+  if (!date) { showToast('请选择跟进日期', true); return; }
+  
+  var record = {
+    id: Date.now(),
+    customer: customer,
+    date: date,
+    status: status,
+    nextDate: nextDate,
+    remark: remark,
+    createdAt: new Date().toISOString()
+  };
+  
+  followupData.unshift(record);
+  saveFollowupToStorage();
+  
+  // 清空表单
+  document.getElementById('fuCustomer').value = '';
+  document.getElementById('fuRemark').value = '';
+  document.getElementById('fuNextDate').value = '';
+  document.getElementById('fuDate').valueAsDate = new Date();
+  document.getElementById('fuStatus').value = '待联系';
+  
+  renderFollowupList();
+  showToast('跟进记录已保存');
+}
+
+function renderFollowupList() {
+  var filterStatus = document.getElementById('fuFilterStatus').value;
+  var data = filterStatus ? followupData.filter(function(r){ return r.status === filterStatus; }) : followupData;
+  
+  if (!data.length) {
+    document.getElementById('followupList').innerHTML = '<div style="text-align:center;color:#999;padding:30px;">暂无跟进记录</div>';
+    return;
+  }
+  
+  var html = data.map(function(r) {
+    return '<div class="fu-item">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+        '<span style="font-weight:bold;font-size:14px;">' + r.customer + '</span>' +
+        '<div style="display:flex;gap:6px;align-items:center;">' +
+          '<span class="fu-status ' + r.status + '">' + r.status + '</span>' +
+          '<button onclick="deleteFollowup(' + r.id + ')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;">×</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:12px;color:#666;display:flex;gap:15px;">' +
+        '<span>📅 跟进：' + r.date + '</span>' +
+        (r.nextDate ? '<span style="color:#f59e0b;">⏰ 下次：' + r.nextDate + '</span>' : '') +
+      '</div>' +
+      (r.remark ? '<div style="font-size:12px;color:#374151;margin-top:6px;background:#f9fafb;padding:6px 8px;border-radius:4px;">💬 ' + r.remark + '</div>' : '') +
+    '</div>';
+  }).join('');
+  
+  document.getElementById('followupList').innerHTML = html;
+}
+
+function deleteFollowup(id) {
+  if (!confirm('确定删除这条跟进记录？')) return;
+  followupData = followupData.filter(function(r){ return r.id !== id; });
+  saveFollowupToStorage();
+  renderFollowupList();
+  showToast('已删除');
+}
+
+function clearFollowupFilter() {
+  document.getElementById('fuFilterStatus').value = '';
+  renderFollowupList();
+}
+
+// 初始化跟进日期
+function initFollowupDate() {
+  document.getElementById('fuDate').valueAsDate = new Date();
+}
+
+function showToast(msg, isErr, warn) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' error' : '') + (warn ? ' warning' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove()}, 3000);
+}
+</script>
+
+<script>
+function findDup(){var p={},ph={},d=[];records.forEach(function(r){if(r.plate){if(p[r.plate])d.push('🚗'+r.plate);p[r.plate]=1;}if(r.customer_phone){if(ph[r.customer_phone])d.push('📱'+r.customer_phone);ph[r.customer_phone]=1;}});if(!d.length)return showToast('无重复');var m=document.createElement('div');m.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';m.innerHTML='<div style="background:white;padding:20px;border-radius:10px;max-width:350px;"><h3>发现重复'+d.length+'条</h3>'+d.slice(0,15).join('')+'<button onclick="this.parentElement.remove()" style="width:100%;margin-top:15px;padding:10px;background:#1a56db;color:white;border:none;border-radius:6px;">关闭</button></div>';document.body.appendChild(m);}
+function toggleD(){document.body.classList.toggle('dm');localStorage.setItem('dm',document.body.classList.contains('dm')?'1':'0');}
+(function(){if(localStorage.getItem('dm')==='1')document.body.classList.add('dm');})();
+document.addEventListener('keydown',function(e){if(e.ctrlKey&&e.key==='s'){e.preventDefault();if(document.getElementById('addModal').style.display!=='none')saveRecord();else if(document.getElementById('editModal').style.display!=='none')saveEdit();else searchRecords();}if(e.ctrlKey&&e.key==='n'){e.preventDefault();document.getElementById('addModal').style.display='flex';}if(e.key==='Escape')closeModal();});
+function impDat(f){
+  if(!f)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    try{
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      var data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]),add=0,skip=0;
+      data.forEach(function(row){
+        var name=row['客户姓名']||row.name||'',plate=row['车牌']||row.plate||'';
+        if(!name&&!plate){skip++;return;}
+        if(records.some(function(r){return r.plate===plate&&plate;})){skip++;return;}
+        records.push({id:Date.now()+Math.random(),customer_name:name,plate:plate,customer_phone:row['电话']||'',company:row['公司']||'',biz_premium:parseFloat(row['商业险']||0),force_premium:parseFloat(row['交强险']||0),total_premium:parseFloat(row['总保费']||0),commission:parseFloat(row['佣金']||0),agency_fee:parseFloat(row['手续费']||0),salesman:row['业务员']||'蟹老板',sign_date:row['签单日期']||'',created_at:new Date().toISOString()});
+        add++;
+      });
+      saveToSupabase();loadData();showToast('导入成功'+add+'条,跳过'+skip+'条');
+    }catch(err){showToast('导入失败:'+err.message,true);}
+  };
+  r.readAsArrayBuffer(f);document.getElementById('impBtn').value='';
+}
+</script>
+</body>
+</html>
